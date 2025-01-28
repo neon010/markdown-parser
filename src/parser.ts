@@ -57,6 +57,16 @@ export function parse(tokens: Token[], plugins: Array<(token: Token) => string |
             }
             break;
   
+          case 'blockquote':
+            if (token.content) {
+              const content = token.content
+                .split('\n') // Split blockquote into individual lines
+                .map((line) => `<p>${line}</p>`)
+                .join(''); // Wrap each line in a paragraph
+              return `<blockquote>${content}</blockquote>`;
+            }
+            break;
+  
           case 'table':
             if (token.content) {
               const rows = token.content.trim().split('\n');
@@ -100,4 +110,5 @@ export function parse(tokens: Token[], plugins: Array<(token: Token) => string |
       })
       .join('');
   }
+  
   

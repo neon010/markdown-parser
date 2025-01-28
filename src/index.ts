@@ -73,11 +73,28 @@ export class MarkdownParser {
    * block quote plugin to convert image tokens to HTML
    */
   private blockQuotePlugin(token: Token): string | null {
-    if (token.type === "paragraph" && token.content?.includes("**")) {
-      return `<p>${token.content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")}</p>`;
+    if (
+      token.type === "paragraph" &&
+      token.content &&
+      (/(\*\*|__|\*|_|~~)/.test(token.content)) // Check if formatting symbols exist
+    ) {
+      let content = token.content;
+  
+      // Replace bold: **text** or __text__ → <strong>text</strong>
+      content = content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/__(.*?)__/g, "<strong>$1</strong>");
+      
+      // Replace italics: _text_ or *text* → <em>text</em>
+      content = content.replace(/\*(.*?)\*/g, "<em>$1</em>").replace(/_(.*?)_/g, "<em>$1</em>");
+      
+      // Replace strikethrough: ~~text~~ → <del>text</del>
+      content = content.replace(/~~(.*?)~~/g, "<del>$1</del>");
+  
+      return `<p>${content}</p>`;
     }
-    return null;
+  
+    return null; // Return null if no formatting symbols are present
   }
+  
   private imagePlugin(token: Token): string | null {
     if (token.type === "paragraph" && token.content && /!\[([^\]]*)\]\(([^)]+)\)/.test(token.content)) {
       // Process content only if it contains an image markdown syntax
@@ -129,7 +146,16 @@ This is google link: [Google](https://google.com)
 
 1. orderd list 1
 2. orderd list 2
-3. orderd list 3`;
+3. orderd list 3
+
+> This is a blockquote 1
+> this is a blockquote 2
+ 
+This is **bold** text.
+This is *italic* text.
+This is ~~strikethrough~~ text.
+
+`;
 
 const parser = new MarkdownParser();
 

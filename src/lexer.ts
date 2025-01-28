@@ -2,7 +2,7 @@
  * Token interface
  */
 export interface Token {
-    type: 'heading' | 'paragraph' | 'table' | 'image' | 'link' | 'unordered_list' | 'ordered_list'; // Token type
+    type: 'heading' | 'paragraph' | 'table' | 'image' | 'link' | 'unordered_list' | 'ordered_list' | 'blockquote'; // Token type
     content?: string; // For heading, paragraph, and table
     level?: number; // Used for headings
     src?: string; // Used for images
@@ -96,6 +96,7 @@ export function tokenize(input: string): Token[] {
   while (i < lines.length) {
     const line = lines[i];
     const trimmedLine = line.trim();
+
     if (!trimmedLine) {
       i++;
       continue; // Skip empty lines
@@ -107,9 +108,53 @@ export function tokenize(input: string): Token[] {
       tokens.push({
         type: 'heading',
         content: headingMatch[2],
-        level: headingMatch[1].length,
+        level: headingMatch[1].length, // Number of '#' characters determines level
       });
       i++;
+      continue;
+    }
+
+    // Detect ordered lists (e.g., "1. Item")
+    const orderedListMatch = /^\d+\.\s+(.*)$/.exec(trimmedLine);
+    if (orderedListMatch) {
+      const listItems: string[] = [];
+      while (i < lines.length && /^\d+\.\s+(.*)$/.test(lines[i].trim())) {
+        listItems.push(lines[i].trim().replace(/^\d+\.\s+/, '')); // Remove "1." prefix
+        i++;
+      }
+      tokens.push({
+        type: 'ordered_list',
+        items: listItems,
+      });
+      continue;
+    }
+
+    // Detect unordered lists (e.g., "- Item" or "* Item")
+    const unorderedListMatch = /^[-*]\s+(.*)$/.exec(trimmedLine);
+    if (unorderedListMatch) {
+      const listItems: string[] = [];
+      while (i < lines.length && /^[-*]\s+(.*)$/.test(lines[i].trim())) {
+        listItems.push(lines[i].trim().replace(/^[-*]\s+/, '')); // Remove "-" or "*" prefix
+        i++;
+      }
+      tokens.push({
+        type: 'unordered_list',
+        items: listItems,
+      });
+      continue;
+    }
+
+    // Detect blockquotes
+    if (trimmedLine.startsWith('>')) {
+      const blockquoteContent: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('>')) {
+        blockquoteContent.push(lines[i].trim().replace(/^>\s*/, '')); // Remove the ">" prefix
+        i++;
+      }
+      tokens.push({
+        type: 'blockquote',
+        content: blockquoteContent.join('\n'), // Combine all lines into one block
+      });
       continue;
     }
 
@@ -118,8 +163,8 @@ export function tokenize(input: string): Token[] {
     if (standaloneImageMatch) {
       tokens.push({
         type: 'image',
-        alt: standaloneImageMatch[1],
-        src: standaloneImageMatch[2],
+        alt: standaloneImageMatch[1], // Alt text
+        src: standaloneImageMatch[2], // Image source URL
       });
       i++;
       continue;
@@ -130,40 +175,14 @@ export function tokenize(input: string): Token[] {
     if (standaloneLinkMatch) {
       tokens.push({
         type: 'link',
-        text: standaloneLinkMatch[1],
-        href: standaloneLinkMatch[2],
+        text: standaloneLinkMatch[1], // Link text
+        href: standaloneLinkMatch[2], // Link URL
       });
       i++;
       continue;
     }
 
-    // Detect unordered lists
-    const unorderedListMatch = /^[-*+]\s+(.+)$/.exec(trimmedLine);
-    if (unorderedListMatch) {
-      const listBuffer: string[] = [];
-      while (i < lines.length && /^[-*+]\s+(.+)$/.test(lines[i].trim())) {
-        listBuffer.push(lines[i].trim().substring(2));
-        i++;
-      }
-
-      tokens.push({ type: 'unordered_list', items: listBuffer });
-      continue;
-    }
-
-    // Detect ordered lists
-    const orderedListMatch = /^\d+\.\s+(.+)$/.exec(trimmedLine);
-    if (orderedListMatch) {
-      const listBuffer: string[] = [];
-      while (i < lines.length && /^\d+\.\s+(.+)$/.test(lines[i].trim())) {
-        listBuffer.push(lines[i].trim().replace(/^\d+\.\s+/, ''));
-        i++;
-      }
-
-      tokens.push({ type: 'ordered_list', items: listBuffer });
-      continue;
-    }
-
-    // Detect table start
+    // Detect table start (must have '|' and optional delimiters)
     if (/^\|.*\|$/.test(trimmedLine)) {
       const tableBuffer: string[] = [];
       while (i < lines.length && /^\|.*\|$/.test(lines[i].trim())) {
@@ -175,23 +194,15 @@ export function tokenize(input: string): Token[] {
       continue;
     }
 
-    // Treat the entire line as a paragraph (with inline parsing for links and images)
-    const inlineLinkOrImage = trimmedLine.replace(
-      /!\[([^\]]*)\]\(([^)]+)\)|\[([^\]]+)\]\(([^)]+)\)/g,
-      (_, alt, src, text, href) =>
-        alt && src
-          ? `<img alt="${alt}" src="${src}" />`
-          : text && href
-          ? `<a href="${href}">${text}</a>`
-          : ''
-    );
-
-    tokens.push({ type: 'paragraph', content: inlineLinkOrImage });
+    // Treat the entire line as a paragraph (preserve inline links or images)
+    tokens.push({ type: 'paragraph', content: trimmedLine });
     i++;
   }
 
   return tokens;
 }
+
+
 
 
   
