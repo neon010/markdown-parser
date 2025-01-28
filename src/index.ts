@@ -122,7 +122,14 @@ This is google link: [Google](https://google.com)
 |-------|-----|
 | Alice |  25 |
 | Bob   |  30 |
-    `;
+
+- list 1
+- list 2
+- list 3
+
+1. orderd list 1
+2. orderd list 2
+3. orderd list 3`;
 
 const parser = new MarkdownParser();
 
