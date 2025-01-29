@@ -1,5 +1,6 @@
 import { tokenize, Token } from "./tokenize";
 import { parse } from "./parser";
+import { escapeHtml } from "./plugins";
 
 /**
  * Markdown parser class
@@ -9,7 +10,12 @@ export class MarkdownParser {
 
   constructor() {
     // Initialize with the table plugin by default
-    this.plugins = [this.tablePlugin, this.blockQuotePlugin, this.imagePlugin, this.linkPlugin];
+    this.plugins = [
+      this.tablePlugin,
+      this.blockQuotePlugin.bind(this),
+      this.imagePlugin,
+      this.linkPlugin,
+    ];
   }
 
   /**
@@ -36,77 +42,100 @@ export class MarkdownParser {
   /**
    * Table plugin to convert table tokens to HTML
    */
-private tablePlugin(token: Token): string | null {
-  if (token.type === "table" && token.content) {
-    // Split rows, filter out empty lines, and trim each row
-    const rows = token.content
-      .trim()
-      .split("\n")
-      .map((row) => row.trim())
-      .filter((row) => row.length > 0);
+  private tablePlugin(token: Token): string | null {
+    if (token.type === "table" && token.content) {
+      // Split rows, filter out empty lines, and trim each row
+      const rows = token.content
+        .trim()
+        .split("\n")
+        .map((row) => row.trim())
+        .filter((row) => row.length > 0);
 
-    // Ensure there are enough rows for headers and body
-    if (rows.length < 2) {
-      return null; // Invalid table structure
+      // Ensure there are enough rows for headers and body
+      if (rows.length < 2) {
+        return null; // Invalid table structure
+      }
+
+      // Extract headers
+      const headers = rows[0]
+        .split("|")
+        .map((header) => header.trim())
+        .filter((header) => header !== "")
+        .map((header) => `<th>${header}</th>`)
+        .join("");
+
+      // Extract table body (skip the first two rows: headers and delimiter)
+      const body = rows
+        .slice(2)
+        .map(
+          (row) =>
+            `<tr>${row
+              .split("|")
+              .map((cell) => cell.trim())
+              .filter((cell) => cell !== "")
+              .map((cell) => `<td>${cell}</td>`)
+              .join("")}</tr>`
+        )
+        .join("");
+
+      return `<table><thead><tr>${headers}</tr></thead><tbody>${body}</tbody></table>`;
     }
 
-    // Extract headers
-    const headers = rows[0]
-      .split("|")
-      .map((header) => header.trim())
-      .filter((header) => header !== "")
-      .map((header) => `<th>${header}</th>`)
-      .join("");
-
-    // Extract table body (skip the first two rows: headers and delimiter)
-    const body = rows
-      .slice(2)
-      .map((row) =>
-        `<tr>${row
-          .split("|")
-          .map((cell) => cell.trim())
-          .filter((cell) => cell !== "")
-          .map((cell) => `<td>${cell}</td>`)
-          .join("")}</tr>`
-      )
-      .join("");
-
-    return `<table><thead><tr>${headers}</tr></thead><tbody>${body}</tbody></table>`;
+    return null;
   }
 
-  return null;
-}
-
-
-  
   /**
    * block quote plugin to convert image tokens to HTML
    */
   private blockQuotePlugin(token: Token): string | null {
+    console.log(token)
     if (
       token.type === "paragraph" &&
       token.content &&
-      (/(\*\*|__|\*|_|~~)/.test(token.content)) // Check if formatting symbols exist
+      // Check for valid markdown patterns (paired symbols)
+      (
+        /<.*?>/.test(token.content) || // Check for HTML tags
+        /\*\*.*?\*\*|__.*?__|\*.*?\*|_.*?_|~~.*?~~/.test(token.content) // Check for Markdown patterns
+      )
     ) {
       let content = token.content;
+      console.log("content before", content)
+      // Escape HTML first to prevent injection
+      content = this.escapeHtml(content);
+      console.log("content after", content)
+      // Process bold: **text** or __text__
+      content = content.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>");
   
-      // Replace bold: **text** or __text__ → <strong>text</strong>
-      content = content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/__(.*?)__/g, "<strong>$1</strong>");
-      
-      // Replace italics: _text_ or *text* → <em>text</em>
-      content = content.replace(/\*(.*?)\*/g, "<em>$1</em>").replace(/_(.*?)_/g, "<em>$1</em>");
-      
-      // Replace strikethrough: ~~text~~ → <del>text</del>
+      // Process italics: *text* or _text_
+      content = content.replace(/(\*|_)(.*?)\1/g, "<em>$2</em>");
+  
+      // Process strikethrough: ~~text~~
       content = content.replace(/~~(.*?)~~/g, "<del>$1</del>");
   
       return `<p>${content}</p>`;
     }
   
-    return null; // Return null if no formatting symbols are present
+    return null; // Skip processing if no valid markdown
+  }
+  
+  // Helper function to escape HTML tags
+  private escapeHtml(str: string): string {
+    const entityMap: { [key: string]: string } = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      '"': '&quot;',
+      "'": '&#39;',
+  };
+  return str.replace(/[<>&"']/g, (match) => entityMap[match]);
   }
   
   private imagePlugin(token: Token): string | null {
-    if (token.type === "paragraph" && token.content && /!\[([^\]]*)\]\(([^)]+)\)/.test(token.content)) {
+    if (
+      token.type === "paragraph" &&
+      token.content &&
+      /!\[([^\]]*)\]\(([^)]+)\)/.test(token.content)
+    ) {
       // Process content only if it contains an image markdown syntax
       const res = token.content.replace(
         /!\[([^\]]*)\]\(([^)]+)\)/g,
@@ -116,65 +145,22 @@ private tablePlugin(token: Token): string | null {
     }
     return null;
   }
-  
+
   private linkPlugin(token: Token): string | null {
-    if (token.type === "paragraph" && token.content && /\[([^\]]+)\]\(([^)]+)\)/.test(token.content)) {
+    if (
+      token.type === "paragraph" &&
+      token.content &&
+      /\[([^\]]+)\]\(([^)]+)\)/.test(token.content)
+    ) {
       // Process content only if it contains a link markdown syntax
       const res = token.content.replace(
         /\[([^\]]+)\]\(([^)]+)\)/g, // Match [Text](URL)
-        (_, text, href) => `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`
+        (_, text, href) =>
+          `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`
       );
       return `<p>${res}</p>`;
     }
     return null;
   }
-    
-  
 }
-
-// const markdown = `
-// This is google link: [Google](https://google.com)
-//     `;
-
-// const markdown = `
-// ###### This is a heading 6
-// ## this is a heading 2
-// ### this is a heading 3
-// Here is an image: ![Alt text](https://example.com/image.png).
-// ![Another image](https://example.com/another.png).
-// this is bold text example: **This is bold text**
-// This is google link: [Google](https://google.com)
-// [Example-linkl](https://example.com)
-// | Name  | Age |
-// |-------|-----|
-// | Alice |  25 |
-// | Bob   |  30 |
-
-// - list 1
-// - list 2
-// - list 3
-
-// 1. orderd list 1
-// 2. orderd list 2
-// 3. orderd list 3
-
-// > This is a blockquote 1
-// > this is a blockquote 2
- 
-// This is **bold** text.
-// This is *italic* text.
-// This is ~~strikethrough~~ text.
-
-// `;
-
-const markdown = `| Header 1 | Header 2 |
-|----------|----------|
-| Cell 1   | Cell 2   |
-| Missing Header`
-
-const parser = new MarkdownParser();
-
-const html = parser.render(markdown);
-
-console.log(html);
 

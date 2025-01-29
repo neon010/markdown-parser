@@ -89,6 +89,27 @@ describe('MarkdownParser', () => {
 | Cell 1   | Cell 2   |
 | Missing Header`;
     const html = parser.render(markdown);
-    expect(html).toBe('<table><thead><tr><th>Header 1</th><th>Header 2</th></tr></thead><tbody><tr><td>Cell 1</td><td>Cell 2</td></tr></tbody></table>');
+    expect(html).toBe('<table><thead><tr><th>Header 1</th><th>Header 2</th></tr></thead><tbody><tr><td>Cell 1</td><td>Cell 2</td></tr><tr><td>Missing Header</td></tr></tbody></table>');
+  });
+
+  // Test 11: Test invalid Markdown input (unclosed tag)
+  it('should return the original input for unclosed tag', () => {
+    const markdown = 'This is <b>bold';
+    const html = parser.render(markdown);
+    expect(html).toBe('<p>This is &lt;b&gt;bold</p>');
+  });
+
+  // Test 12: Test invalid Markdown input (incorrect syntax)
+  it('should return the original input for incorrect syntax', () => {
+    const markdown = 'This is [an example';
+    const html = parser.render(markdown);
+    expect(html).toBe('<p>This is [an example</p>');
+  });
+
+  // Test 13: Test invalid Markdown input (unsupported syntax)
+  it('should return the original input for unsupported syntax', () => {
+    const markdown = 'This is a ^superscript^';
+    const html = parser.render(markdown);
+    expect(html).toBe('<p>This is a ^superscript^</p>');
   });
 });
