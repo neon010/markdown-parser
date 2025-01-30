@@ -1,6 +1,5 @@
 import { tokenize, Token } from "./tokenize";
 import { parse } from "./parser";
-import { escapeHtml } from "./plugins";
 
 /**
  * Markdown parser class
@@ -88,21 +87,22 @@ export class MarkdownParser {
    * block quote plugin to convert image tokens to HTML
    */
   private blockQuotePlugin(token: Token): string | null {
-    console.log(token)
+    console.log(token);
     if (
       token.type === "paragraph" &&
       token.content &&
-      // Check for valid markdown patterns (paired symbols)
+      // Check for valid markdown patterns (paired symbols or inline code)
       (
         /<.*?>/.test(token.content) || // Check for HTML tags
-        /\*\*.*?\*\*|__.*?__|\*.*?\*|_.*?_|~~.*?~~/.test(token.content) // Check for Markdown patterns
+        /\*\*.*?\*\*|__.*?__|\*.*?\*|_.*?_|~~.*?~~|`.*?`/.test(token.content) // Check for Markdown patterns, including inline code
       )
     ) {
       let content = token.content;
-      console.log("content before", content)
+      console.log("content before", content);
       // Escape HTML first to prevent injection
       content = this.escapeHtml(content);
-      console.log("content after", content)
+      console.log("content after", content);
+  
       // Process bold: **text** or __text__
       content = content.replace(/(\*\*|__)(.*?)\1/g, "<strong>$2</strong>");
   
@@ -112,11 +112,15 @@ export class MarkdownParser {
       // Process strikethrough: ~~text~~
       content = content.replace(/~~(.*?)~~/g, "<del>$1</del>");
   
+      // Process inline code: `code`
+      content = content.replace(/`(.*?)`/g, "<code>$1</code>");
+  
       return `<p>${content}</p>`;
     }
   
     return null; // Skip processing if no valid markdown
   }
+  
   
   // Helper function to escape HTML tags
   private escapeHtml(str: string): string {
@@ -163,4 +167,16 @@ export class MarkdownParser {
     return null;
   }
 }
+
+
+const parser = new MarkdownParser();
+
+const markdown = `
+\`\`\`javascript
+console.log("Hello, World!");
+\`\`\`
+`;
+
+const html = parser.render(markdown);
+console.log(html);
 
