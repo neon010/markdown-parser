@@ -1,12 +1,16 @@
 {
-    "compilerOptions": {
-      "outDir": "dist",
-      "target": "es6",
-      "module": "commonjs",
-      "strict": true,
-      "esModuleInterop": true
-    },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules"]
-  }
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "es6",
+    "module": "CommonJS",
+    "strict": true,
+    "esModuleInterop": true,
+    "declaration": true,  // Generates `.d.ts` type declaration files
+    "declarationDir": "dist/types",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+
   

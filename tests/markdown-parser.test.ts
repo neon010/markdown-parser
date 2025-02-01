@@ -1,4 +1,4 @@
-import { MarkdownParser } from "../src/index"; // Import the class
+import { MarkdownParser } from "../src/MarkdownParser"; // Import the class
 
 describe("MarkdownParser", () => {
   let parser: MarkdownParser; // Explicitly typing the parser variable
@@ -217,4 +217,36 @@ without any proper structure.
     expect(html).toBe(`<h1>This is a heading</h1><hr>
 <p>This is a paragraph with <strong>bold</strong> and <em>italic</em> text.</p>`);
   });
+
+//   it("should highlight code syntax", () => {
+//     const markdown = `
+//   \`\`\`javascript
+//   console.log("Hello, World!");
+//   \`\`\`
+//     `;
+  
+//     const parser = new MarkdownParser();
+//     parser.enableSyntaxHighlighting(true); // Enable syntax highlighting
+//     const html = parser.render(markdown);
+//     console.log(html);
+  
+//     // Expected HTML with normalized spaces
+//   // Expected HTML
+//   const expectedHtml = `
+// <pre class="hljs"><code class="language-javascript">
+//   <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&quot;Hello, World!&quot;</span>);
+// </code></pre>`;
+
+//   // Normalize HTML for comparison
+//   const normalizeHtml = (str: string) =>
+//     str
+//       .split("\n") // Split into lines
+//       .map((line) => line.trim()) // Trim each line
+//       .join(""); // Join lines without spaces
+
+//   expect(normalizeHtml(html)).toBe(normalizeHtml(expectedHtml));
+//   });
+  
+  
+  
 });

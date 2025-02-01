@@ -1,16 +1,17 @@
 {
-  "name": "markdown",
+  "name": "markdown-parser",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "description": "A simple Markdown parser",
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
     "test": "jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/markdown-it": "^14.1.2",
@@ -23,7 +24,10 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "highlight.js": "^11.11.1",
     "markdown": "file:",
+    "markdown-it-highlightjs": "^4.2.0",
+    "markdown-parser": "file:",
     "prismjs": "^1.29.0"
   }
 }

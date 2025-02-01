@@ -1,24 +1,28 @@
-// import Prism from "prismjs";
-// // Import necessary Prism components and languages
-// import "prismjs/components/prism-javascript";
-// import "prismjs/components/prism-python";
-// import "prismjs/components/prism-css";
-// import "prismjs/themes/prism.css";
-// import { Token } from "./tokenize";
+import hljs from "highlight.js"; // Import highlight.js
 
-// export function syntaxHighlightPlugin(token: Token): string {
-//     // if (token.content) {
-//     //     const language = token.language || "plaintext"; // Default to plaintext if no language is specified
-//     //     const grammar = Prism.languages[language];
-//     //     const highlightedCode = grammar
-//     //       ? Prism.highlight(token.content, grammar, language)
-//     //       : escapeHtml(token.content); // Fallback to escaping HTML if the language is not supported
-    
-//     //     return `<pre class="language-${language}"><code class="language-${language}">${highlightedCode}</code></pre>`;
-//     //   }
-//     console.log(token);
-//       return token.content ? token.content : "";
-// }
+import { Token } from "./tokenize"; // Assuming you still use the Token type
+
+export function syntaxHighlightPlugin(token: Token): string | null {
+    console.log(token);
+    if (token.content) {
+        const language = token.language || "plaintext"; // Default to plaintext if no language is specified
+        
+        // Check if the language is supported by highlight.js
+        if (hljs.getLanguage(language)) {
+            // Highlight the code using highlight.js
+            const highlightedCode = hljs.highlight(token.content, { language }).value;
+
+            // Return the highlighted code as HTML
+            return `<pre class="hljs"><code class="language-${language}">${highlightedCode}</code></pre>`;
+        } else {
+            // Fallback for unsupported languages or plaintext
+            return `<pre class="hljs"><code>${escapeHtml(token.content)}</code></pre>`;
+        }
+    }
+
+    return null; // Return null if there's no content
+}
+
 
 
 export function escapeHtml(str: string): string {
