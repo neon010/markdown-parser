@@ -1,17 +1,51 @@
 {
-  "name": "markdown-parser",
-  "version": "1.0.0",
+  "name": "md-parser-pro",
+  "version": "1.1.0",
+  "description": "A powerful Markdown parser with syntax highlighting and advanced features",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "description": "A simple Markdown parser",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node/index.js",
+      "require": "./dist/node/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "test": "jest"
+    "test": "jest",
+    "prepublishOnly": "npm test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "markdown",
+    "parser",
+    "syntax-highlighting",
+    "html",
+    "prismjs",
+    "markdown-it"
+  ],
+  "author": "Mohan Kumar Sag <mks10685@gmail.com> (https://www.geeksmonk.com/)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neon010/markdown-parser"
+  },
+  "bugs": {
+    "url": "https://github.com/neon010/markdown-parser/issues"
+  },
+  "homepage": "https://github.com/neon010/markdown-parser#readme",
+  "files": [
+    "dist/**/*"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/markdown-it": "^14.1.2",
@@ -25,9 +59,8 @@
   },
   "dependencies": {
     "highlight.js": "^11.11.1",
-    "markdown": "file:",
     "markdown-it-highlightjs": "^4.2.0",
-    "markdown-parser": "file:",
+    "md-parser-pro": "file:",
     "prismjs": "^1.29.0"
   }
 }
