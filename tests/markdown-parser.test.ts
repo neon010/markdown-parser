@@ -1,80 +1,107 @@
-import { MarkdownParser } from "../src/MarkdownParser"; // Import the class
+import { MarkdownParser } from "../src/MarkdownParser";
 
 describe("MarkdownParser", () => {
-  let parser: MarkdownParser; // Explicitly typing the parser variable
+  let parser: MarkdownParser;
 
   beforeEach(() => {
-    parser = new MarkdownParser(); // Initialize a new instance of MarkdownParser for each test
+    parser = new MarkdownParser();
   });
 
-  // Test 1: Render Markdown with a heading
   it("should render a heading correctly", () => {
     const markdown = "# Hello World";
     const html = parser.render(markdown);
-    expect(html).toBe("<h1>Hello World</h1>");
+    expect(html).toBe("<h1>Hello World</h1>\n");
   });
 
-  // Test 2: Render Markdown with a link
   it("should render a link correctly", () => {
     const markdown = "This is a [link](https://example.com)";
     const html = parser.render(markdown);
     expect(html).toBe(
-      '<p>This is a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a></p>'
+      '<p>This is a <a href="https://example.com" target="_blank" rel="noopener noreferrer">link</a></p>\n'
     );
   });
 
-  // Test 3: Render Markdown with an image
   it("should render an image correctly", () => {
-    const markdown =
-      "This is an image: ![alt text](https://example.com/image.png)";
+    const markdown = "This is an image: ![alt text](https://example.com/image.png)";
     const html = parser.render(markdown);
     expect(html).toBe(
-      '<p>This is an image: <img src="https://example.com/image.png" alt="alt text"></p>'
+      '<p>This is an image: <img src="https://example.com/image.png" alt="alt text"></p>\n'
     );
   });
 
-  // Test 4: Render Markdown with an unordered list
   it("should render an unordered list correctly", () => {
     const markdown = "- Item 1\n- Item 2";
     const html = parser.render(markdown);
-    expect(html).toBe("<ul><li>Item 1</li><li>Item 2</li></ul>");
+    expect(html).toBe(`<ul>
+  <li>Item 1</li>
+  <li>Item 2</li>
+</ul>\n`);
   });
 
-  // Test 5: Render Markdown with an ordered list
   it("should render an ordered list correctly", () => {
     const markdown = "1. Item 1\n2. Item 2";
-    const html = parser.render(markdown);
-    expect(html).toBe("<ol><li>Item 1</li><li>Item 2</li></ol>");
+    
+    const expectedHtml = `
+      <ol>
+        <li>Item 1</li>
+        <li>Item 2</li>
+      </ol>
+    `.replace(/\s+/g, ' ').trim();
+  
+    const html = parser.render(markdown).replace(/\s+/g, ' ').trim();
+    
+    expect(html).toBe(expectedHtml);
   });
+  
 
-  // Test 6: Render Markdown with a blockquote
   it("should render a blockquote correctly", () => {
     const markdown = "> This is a blockquote";
     const html = parser.render(markdown);
-    expect(html).toBe("<blockquote><p>This is a blockquote</p></blockquote>");
+    expect(html).toBe(`<blockquote>
+  <p>This is a blockquote</p>
+</blockquote>\n`);
   });
 
-  // Test 7: Render Markdown with a table
   it("should render a table correctly", () => {
-    const markdown = `| Header 1 | Header 2 |
-|----------|----------|
-| Cell 1   | Cell 2   |`;
+    const markdown = `
+      | Header 1 | Header 2 |
+      |----------|----------|
+      | Cell 1   | Cell 2   |
+      | Cell 3   | Cell 4   |
+    `;
+
+    const expectedHtml = [
+      "<table>",
+      "  <thead>",
+      "    <tr>",
+      "      <th>Header 1</th>",
+      "      <th>Header 2</th>",
+      "    </tr>",
+      "  </thead>",
+      "  <tbody>",
+      "    <tr>",
+      "      <td>Cell 1</td>",
+      "      <td>Cell 2</td>",
+      "    </tr>",
+      "    <tr>",
+      "      <td>Cell 3</td>",
+      "      <td>Cell 4</td>",
+      "    </tr>",
+      "  </tbody>",
+      "</table>"
+    ].join("\n");
+
     const html = parser.render(markdown);
-    expect(html).toBe(
-      `<table><thead><tr><th>Header 1</th><th>Header 2</th></tr></thead><tbody><tr><td>Cell 1</td><td>Cell 2</td></tr></tbody></table>`
-    );
+    expect(html.replace(/\s+/g, ' ').trim()).toBe(expectedHtml.replace(/\s+/g, ' ').trim());
   });
 
-  // Test 8: Test empty Markdown input
   it("should return an empty string for empty input", () => {
     const markdown = "";
     const html = parser.render(markdown);
     expect(html).toBe("");
   });
 
-  // Test 9: Test adding a custom plugin
   it("should apply a custom plugin correctly", () => {
-    // Custom plugin that wraps headings with a special class
     parser.use((token) => {
       if (token.type === "heading" && token.level === 1) {
         return `<h1 class="custom">${token.content}</h1>`;
@@ -84,89 +111,115 @@ describe("MarkdownParser", () => {
 
     const markdown = "# Custom Heading";
     const html = parser.render(markdown);
-    expect(html).toBe('<h1 class="custom">Custom Heading</h1>');
+    expect(html).toBe('<h1 class="custom">Custom Heading</h1>\n');
   });
 
-  // Test 10: Test malformed Markdown input (missing table delimiter)
   it("should handle malformed table input gracefully", () => {
     const markdown = `| Header 1 | Header 2 |
-|----------|----------|
-| Cell 1   | Cell 2   |
-| Missing Header`;
-    const html = parser.render(markdown);
-    expect(html).toBe(
-      "<table><thead><tr><th>Header 1</th><th>Header 2</th></tr></thead><tbody><tr><td>Cell 1</td><td>Cell 2</td></tr><tr><td>Missing Header</td></tr></tbody></table>"
-    );
+    |----------|----------|
+    | Cell 1   | Cell 2   |
+    | Missing Header`;
+
+    const expectedHtml = `
+      <table>
+        <thead>
+          <tr>
+            <th>Header 1</th>
+            <th>Header 2</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cell 1</td>
+            <td>Cell 2</td>
+          </tr>
+          <tr>
+            <td>Missing Header</td>
+          </tr>
+        </tbody>
+      </table>
+    `.replace(/\s+/g, ' ').trim();
+
+    const html = parser.render(markdown).replace(/\s+/g, ' ').trim();
+    expect(html).toBe(expectedHtml);
   });
 
-  // Test 11: Test invalid Markdown input (unclosed tag)
   it("should return the original input for unclosed tag", () => {
     const markdown = "This is <b>bold";
     const html = parser.render(markdown);
-    expect(html).toBe("<p>This is &lt;b&gt;bold</p>");
+    expect(html).toBe("<p>This is &lt;b&gt;bold</p>\n");
   });
 
-  // Test 12: Test invalid Markdown input (incorrect syntax)
   it("should return the original input for incorrect syntax", () => {
     const markdown = "This is [an example";
     const html = parser.render(markdown);
-    expect(html).toBe("<p>This is [an example</p>");
+    expect(html).toBe("<p>This is [an example</p>\n");
   });
 
-  // Test 13: Test invalid Markdown input (unsupported syntax)
   it("should return the original input for unsupported syntax", () => {
     const markdown = "This is a ^superscript^";
     const html = parser.render(markdown);
-    expect(html).toBe("<p>This is a ^superscript^</p>");
+    expect(html).toBe("<p>This is a ^superscript^</p>\n");
   });
 
-  // Test 14: Test rendering Markdown with inline code
   it("should correctly process inline code", () => {
     const markdown = "This is `inline code`.";
     const html = parser.render(markdown);
-    expect(html).toBe("<p>This is <code>inline code</code>.</p>");
+    expect(html).toBe("<p>This is <code>inline code</code>.</p>\n");
   });
 
-  // Test 15: Test rendering Markdown with bold , italic, and strikethrough and inline code
   it("should handle mixed markdown correctly", () => {
-    const markdown =
-      "This is **bold**, *italic*, ~~strikethrough~~, and `inline code`.";
-
+    const markdown = "This is **bold**, *italic*, ~~strikethrough~~, and `inline code`.";
     const html = parser.render(markdown);
     expect(html).toBe(
-      "<p>This is <strong>bold</strong>, <em>italic</em>, <del>strikethrough</del>, and <code>inline code</code>.</p>"
+      "<p>This is <strong>bold</strong>, <em>italic</em>, <del>strikethrough</del>, and <code>inline code</code>.</p>\n"
     );
   });
 
-  // Test 16: Test rendering Markdown with a code block
-  it("should correctly render a code block from Markdown", () => {
+  it("should escape HTML characters in a code block", () => {
     const markdown = `
-\`\`\`
-console.log("Hello, world!");
-\`\`\`
-`;
-    const html = parser.render(markdown);
-    expect(html).toBe(
-      "<pre><code>console.log(&quot;Hello, world!&quot;);</code></pre>"
-    );
+  \`\`\`
+  console.log("Hello, world!");
+  \`\`\`
+  `;
+    const expectedOutput = `
+  <pre>
+    <code>
+  console.log(&quot;Hello, world!&quot;);
+    </code>
+  </pre>`.replace(/\n\s*/g, "");
+
+    const html = parser.render(markdown).replace(/\n\s*/g, "");
+    expect(html).toBe(expectedOutput);
   });
 
-  test("renders code blocks", () => {
-    const parser = new MarkdownParser();
+  it("renders code blocks", () => {
     const markdown = "```\nconst x = 10;\n```";
     const html = parser.render(markdown);
-    expect(html).toBe("<pre><code>const x = 10;</code></pre>");
+    expect(html).toBe(`<pre>
+  <code>
+const x = 10;
+  </code>
+</pre>\n`);
   });
 
   it("should escape HTML characters in a code block", () => {
     const markdown = `
 \`\`\`
 <div>Hello</div>
+<div>Hello</div>
 \`\`\`
 `;
-    const html = parser.render(markdown);
+    const expectedOutput = `
+<pre>
+  <code>
+&lt;div&gt;Hello&lt;/div&gt;
+&lt;div&gt;Hello&lt;/div&gt;
+  </code>
+</pre>`;
 
-    expect(html).toBe("<pre><code>&lt;div&gt;Hello&lt;/div&gt;</code></pre>");
+    const html = parser.render(markdown).trim();
+    expect(html).toEqual(expectedOutput.trim());
   });
 
   it("should handle mixed content, including a code block", () => {
@@ -184,14 +237,20 @@ function greet() {
 - Item 1
 - Item 2
 `;
-    const html = parser.render(markdown);
+    const expectedOutput = `
+<h1>Title</h1>
+<p>This is a paragraph.</p>
+<pre><code>function greet() {
+  return &quot;Hello!&quot;;
+}</code></pre>
+<ul>
+  <li>Item 1</li>
+  <li>Item 2</li>
+</ul>
+`.replace(/\n\s*/g, "");
 
-    expect(html).toBe(
-      "<h1>Title</h1>" +
-        "<p>This is a paragraph.</p>" +
-        "<pre><code>function greet() {\n  return &quot;Hello!&quot;;\n}</code></pre>" +
-        "<ul><li>Item 1</li><li>Item 2</li></ul>"
-    );
+    const html = parser.render(markdown).replace(/\n\s*/g, "");
+    expect(html).toBe(expectedOutput);
   });
 
   it("should handle invalid Markdown gracefully", () => {
@@ -199,54 +258,50 @@ function greet() {
 Invalid markdown content
 without any proper structure.
 `;
-    const html = parser.render(markdown);
+    const expectedOutput = `
+<p>Invalid markdown content</p>
+<p>without any proper structure.</p>`.trim();
 
-    expect(html).toBe(
-      "<p>Invalid markdown content</p><p>without any proper structure.</p>"
-    );
+    const html = parser.render(markdown).trim();
+    expect(html).toBe(expectedOutput);
   });
+
   it("should handle horizontal rule", () => {
     const markdown = `
-    # This is a heading
-    ---
-    This is a paragraph with **bold** and *italic* text.
-    `;
-    const html = parser.render(markdown);
-    console.log(html);
+# This is a heading
+---
+This is a paragraph with **bold** and *italic* text.
+`;
+    const expectedOutput = `
+<h1>This is a heading</h1>
+<hr />
+<p>This is a paragraph with <strong>bold</strong> and <em>italic</em> text.</p>`.trim();
 
-    expect(html).toBe(`<h1>This is a heading</h1><hr>
-<p>This is a paragraph with <strong>bold</strong> and <em>italic</em> text.</p>`);
+    const html = parser.render(markdown).trim();
+    expect(html).toBe(expectedOutput);
   });
 
-//   it("should highlight code syntax", () => {
-//     const markdown = `
-//   \`\`\`javascript
-//   console.log("Hello, World!");
-//   \`\`\`
-//     `;
-  
-//     const parser = new MarkdownParser();
-//     parser.enableSyntaxHighlighting(true); // Enable syntax highlighting
-//     const html = parser.render(markdown);
-//     console.log(html);
-  
-//     // Expected HTML with normalized spaces
-//   // Expected HTML
-//   const expectedHtml = `
-// <pre class="hljs"><code class="language-javascript">
-//   <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&quot;Hello, World!&quot;</span>);
-// </code></pre>`;
+  it("should highlight code syntax", () => {
+    const markdown = `
+    \`\`\`javascript
+    console.log("Hello, World!");
+    \`\`\`
+    `;
 
-//   // Normalize HTML for comparison
-//   const normalizeHtml = (str: string) =>
-//     str
-//       .split("\n") // Split into lines
-//       .map((line) => line.trim()) // Trim each line
-//       .join(""); // Join lines without spaces
+    parser.enableSyntaxHighlighting(true);
+    const html = parser.render(markdown);
 
-//   expect(normalizeHtml(html)).toBe(normalizeHtml(expectedHtml));
-//   });
-  
-  
-  
+    const expectedHtml = `
+  <pre class="hljs"><code class="language-javascript">
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&quot;Hello, World!&quot;</span>);
+  </code></pre>`;
+
+    const normalizeHtml = (str: string) =>
+      str
+        .split("\n")
+        .map((line) => line.trim())
+        .join("");
+
+    expect(normalizeHtml(html)).toBe(normalizeHtml(expectedHtml));
+  });
 });

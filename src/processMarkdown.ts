@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { MarkdownParser } from './MarkdownParser'; // Update with your actual parser
+import { MarkdownParser } from './MarkdownParser';
 
 export interface ProcessOptions {
   /** Process files in subdirectories recursively */

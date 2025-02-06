@@ -1,31 +1,49 @@
-import hljs from "highlight.js"; 
-import { Token } from "./tokenize"; 
+import { Token } from "./tokenize";
 import { escapeHtml } from "./utills";
 
+let hljs: any;
+
+if (typeof window !== "undefined") {
+  // Browser environment
+  hljs = require("highlight.js/lib/core"); // Tree-shake for smaller bundle size
+  hljs.registerLanguage(
+    "javascript",
+    require("highlight.js/lib/languages/javascript")
+  );
+  hljs.registerLanguage("python", require("highlight.js/lib/languages/python"));
+  hljs.registerLanguage("java", require("highlight.js/lib/languages/java"));
+} else {
+  // Node.js environment
+  hljs = require("highlight.js");
+}
+
 export function syntaxHighlightPlugin(token: Token): string | null {
-  console.log(token);
-  if (token.content) {
+  if (token.type === "code_block" && token.content) {
     const language = token.language || "plaintext"; // Default to plaintext if no language is specified
 
     // Check if the language is supported by highlight.js
     if (hljs.getLanguage(language)) {
-      // Highlight the code using highlight.js
       const highlightedCode = hljs.highlight(token.content, { language }).value;
 
-      // Return the highlighted code as HTML
-      return `<pre class="hljs"><code class="language-${language}">${highlightedCode}</code></pre>`;
+      // Return the highlighted code as formatted HTML with indentation and line breaks
+      return `
+<pre class="hljs">
+  <code class="language-${language}">
+    ${highlightedCode}
+  </code>
+</pre>`.trim();
     } else {
       // Fallback for unsupported languages or plaintext
-      return `<pre class="hljs"><code>${escapeHtml(token.content)}</code></pre>`;
+      return `
+<pre class="hljs">
+  <code>${escapeHtml(token.content)}</code>
+</pre>`.trim();
     }
   }
 
-  return null; // Return null if there's no content
+  return null; // Return null if the token is not a code block or has no content
 }
 
-/**
- * Table plugin to convert table tokens to HTML
- */
 export function tablePlugin(token: Token): string | null {
   if (token.type === "table" && token.content) {
     const rows = token.content
@@ -42,27 +60,37 @@ export function tablePlugin(token: Token): string | null {
       .split("|")
       .map((header) => header.trim())
       .filter((header) => header !== "")
-      .map((header) => `<th>${header}</th>`)
-      .join("");
+      .map((header) => `      <th>${header}</th>`) // Indent headers
+      .join("\n");
 
     const body = rows
       .slice(2)
-      .map(
-        (row) =>
-          `<tr>${row
-            .split("|")
-            .map((cell) => cell.trim())
-            .filter((cell) => cell !== "")
-            .map((cell) => `<td>${cell}</td>`)
-            .join("")}</tr>`
-      )
-      .join("");
+      .map((row) => {
+        const cells = row
+          .split("|")
+          .map((cell) => cell.trim())
+          .filter((cell) => cell !== "")
+          .map((cell) => `      <td>${cell}</td>`) // Indent cells
+          .join("\n");
+        return `    <tr>\n${cells}\n    </tr>`; // Format row with indentation
+      })
+      .join("\n");
 
-    return `<table><thead><tr>${headers}</tr></thead><tbody>${body}</tbody></table>`;
+    return `<table>
+  <thead>
+    <tr>
+${headers}
+    </tr>
+  </thead>
+  <tbody>
+${body}
+  </tbody>
+</table>`;
   }
 
   return null;
 }
+
 
 export function inlineStylesPlugin(token: Token): string | null {
   if (
