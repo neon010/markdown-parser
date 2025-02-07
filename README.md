@@ -1,6 +1,7 @@
 ## A fast and easy to use markdown parser
 
-MarkdownParser is a customizable and extensible JavaScript library for converting Markdown to HTML. It supports plugins for tables, images, links, inline styles, and syntax highlighting, allowing you to extend its functionality with ease.
+MarkdownParser is a customizable and extensible JavaScript library for converting Markdown to HTML. It supports plugins for tables, images,
+links, inline styles, and syntax highlighting, allowing you to extend its functionality with ease.
 
 ## Installation
 
@@ -30,9 +31,11 @@ console.log('Hello, MarkdownParser!');
 const html = parser.enableSyntaxHighlighting(true).render(markdown);
 console.log(html);
 ```
-if you are enabling syntax higlighting, then you must add highlight.js css plugin while rendering parsed html 
+
+if you are enabling syntax higlighting, then you must import highlight.js css theme while rendering parsed html
 
 ## Node.js Example
+
 ```js
 const { MarkdownParser } = require("md-parser-pro/node");
 
@@ -67,7 +70,7 @@ const { processMarkdown } = require("md-parser-pro/node");
 
 (async () => {
   try {
-    await processMarkdown('./markdown-files', './output', {
+    await processMarkdown("./markdown-files", "./output", {
       recursive: true,
       copyAssets: true,
       template: (html, filePath) => `
@@ -84,15 +87,15 @@ const { processMarkdown } = require("md-parser-pro/node");
         info: (message) => console.log(`[INFO]: ${message}`),
         error: (err, message) => console.error(`[ERROR]: ${message}`, err),
       },
-      markdownExtensions: ['.md', '.markdown'],
+      markdownExtensions: [".md", ".markdown"],
     });
   } catch (error) {
-    console.error('Error processing markdown:', error);
+    console.error("Error processing markdown:", error);
   }
 })();
 ```
 
-Function Signature 
+Function Signature
 
 ```js
 async function processMarkdown(
@@ -103,26 +106,28 @@ async function processMarkdown(
 ```
 
 ## Parameters:
+
 - inputDir: string
-Path to the input directory containing Markdown files.
+  Path to the input directory containing Markdown files.
 
 - outputDir: string
-Path to the output directory where converted files will be saved.
+  Path to the output directory where converted files will be saved.
 
 - options?: ProcessOptions
-Optional configuration object for controlling the behavior of the function.
-
+  Optional configuration object for controlling the behavior of the function.
 
 ## ProcessOptions
 
-
 ## Basic Conversion
+
 ```js
-await processMarkdown('./docs', './public', {
+await processMarkdown("./docs", "./public", {
   recursive: true,
 });
 ```
+
 Using a Custom Template
+
 ```
 await processMarkdown('./content', './dist', {
   template: (html, filePath) => `
@@ -134,7 +139,9 @@ await processMarkdown('./content', './dist', {
   `,
 });
 ```
+
 Copying Assets
+
 ```
 await processMarkdown('./website', './build', {
   copyAssets: true,
@@ -144,7 +151,7 @@ await processMarkdown('./website', './build', {
 ## API Reference
 
 1. constructor()
-Creates a new MarkdownParser instance.
+   Creates a new MarkdownParser instance.
 
 ```js
 const parser = new MarkdownParser();
@@ -157,14 +164,16 @@ Registers a custom plugin.
 ```js
 parser.use(customPlugin);
 ```
+
 plugin: A function that takes a Token and returns an HTML string or null.
 
 3. enableSyntaxHighlighting(enable: boolean): this
-Enables or disables syntax highlighting for code blocks.
+   Enables or disables syntax highlighting for code blocks.
 
 ```js
 parser.enableSyntaxHighlighting(true);
 ```
+
 enable: A boolean indicating whether to enable (true) or disable (false) syntax highlighting.
 
 4. render(input: string): string
@@ -174,5 +183,6 @@ Parses the given Markdown string and returns HTML.
 ```js
 const html = parser.render(markdown);
 ```
+
 - input: The Markdown string to be converted to HTML.
 - Returns: A string containing the rendered HTML.
